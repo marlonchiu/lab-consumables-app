@@ -1,0 +1,1897 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>实验室试剂管理系统原型</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #f5f5f5;
+        color: #333;
+      }
+
+      .phone-frame {
+        width: 375px;
+        height: 812px;
+        margin: 20px auto;
+        background: #000;
+        border-radius: 25px;
+        padding: 5px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      }
+
+      .phone-screen {
+        width: 100%;
+        height: 100%;
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .page {
+        display: none;
+        width: 100%;
+        height: 100%;
+        flex-direction: column;
+      }
+
+      .page.active {
+        display: flex;
+      }
+
+      .status-bar {
+        height: 44px;
+        background: #fff;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .header {
+        height: 60px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: 600;
+        position: relative;
+      }
+
+      .back-btn {
+        position: absolute;
+        left: 20px;
+        background: none;
+        border: none;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+      }
+
+      .content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0;
+      }
+
+      .tab-bar {
+        height: 80px;
+        background: white;
+        border-top: 1px solid #eee;
+        display: flex;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .tab-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .tab-item.active {
+        color: #667eea;
+      }
+
+      .tab-icon {
+        font-size: 24px;
+        margin-bottom: 4px;
+      }
+
+      .tab-text {
+        font-size: 12px;
+      }
+
+      /* 首页样式 */
+      .home-banner {
+        height: 200px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px 20px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .home-banner::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+      }
+
+      .welcome-text {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+
+      .lab-info {
+        font-size: 14px;
+        opacity: 0.9;
+      }
+
+      .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        padding: 20px;
+        margin-top: -40px;
+        position: relative;
+        z-index: 2;
+      }
+
+      .action-card {
+        background: white;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+      }
+
+      .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+      }
+
+      .action-icon {
+        font-size: 32px;
+        margin-bottom: 10px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .action-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 5px;
+      }
+
+      .action-desc {
+        font-size: 12px;
+        color: #666;
+      }
+
+      .stats-section {
+        padding: 20px;
+        background: white;
+        margin: 10px 20px;
+        border-radius: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      }
+
+      .stats-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 15px;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+      }
+
+      .stat-item {
+        text-align: center;
+        padding: 15px;
+        background: #f8f9ff;
+        border-radius: 12px;
+      }
+
+      .stat-number {
+        font-size: 24px;
+        font-weight: bold;
+        color: #667eea;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        color: #666;
+        margin-top: 5px;
+      }
+
+      /* 申请页面样式 */
+      .form-group {
+        padding: 15px 20px;
+        background: white;
+        border-bottom: 1px solid #f0f0f0;
+      }
+
+      .form-label {
+        font-size: 14px;
+        color: #333;
+        margin-bottom: 10px;
+        font-weight: 500;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.3s;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      .form-textarea {
+        height: 80px;
+        resize: vertical;
+      }
+
+      .submit-btn {
+        margin: 20px;
+        padding: 16px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+      }
+
+      /* 列表页面样式 */
+      .list-item {
+        background: white;
+        margin: 10px 20px;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .list-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .item-title {
+        font-size: 16px;
+        font-weight: 600;
+      }
+
+      .status-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .status-pending {
+        background: #fff3cd;
+        color: #856404;
+      }
+
+      .status-approved {
+        background: #d1edff;
+        color: #0c5460;
+      }
+
+      .status-rejected {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .item-details {
+        color: #666;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .item-meta {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 10px;
+        font-size: 12px;
+        color: #999;
+      }
+
+      /* 库存页面样式 */
+      .search-bar {
+        padding: 20px;
+        background: white;
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #e0e0e0;
+        border-radius: 25px;
+        font-size: 14px;
+        background: #f8f9fa;
+      }
+
+      .filter-tabs {
+        display: flex;
+        padding: 0 20px 20px;
+        background: white;
+        gap: 10px;
+      }
+
+      .filter-tab {
+        padding: 8px 16px;
+        border: 1px solid #e0e0e0;
+        border-radius: 20px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .filter-tab.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+      }
+
+      .inventory-item {
+        background: white;
+        margin: 5px 20px;
+        padding: 16px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .reagent-info {
+        flex: 1;
+      }
+
+      .reagent-name {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 5px;
+      }
+
+      .reagent-details {
+        font-size: 12px;
+        color: #666;
+        line-height: 1.4;
+      }
+
+      .stock-info {
+        text-align: right;
+      }
+
+      .stock-number {
+        font-size: 18px;
+        font-weight: bold;
+        color: #667eea;
+      }
+
+      .stock-unit {
+        font-size: 12px;
+        color: #666;
+      }
+
+      .low-stock {
+        color: #ff6b6b !important;
+      }
+
+      /* 导航控制 */
+      .nav-controls {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 15px;
+        border-radius: 12px;
+        color: white;
+      }
+
+      .nav-btn {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        margin: 2px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+
+      .nav-btn:hover {
+        background: #5a67d8;
+      }
+
+      .login-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        padding: 40px;
+        text-align: center;
+      }
+
+      .login-logo {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 36px;
+        color: white;
+        margin-bottom: 30px;
+      }
+
+      .login-title {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+
+      .login-subtitle {
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 40px;
+      }
+
+      .wechat-login-btn {
+        background: #07c160;
+        color: white;
+        border: none;
+        padding: 16px 40px;
+        border-radius: 25px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+      }
+
+      .wechat-login-btn:hover {
+        background: #06ad56;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(7, 193, 96, 0.3);
+      }
+
+      .floating-add {
+        position: fixed;
+        bottom: 100px;
+        right: 30px;
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        transition: all 0.3s ease;
+      }
+
+      .floating-add:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+      }
+
+      .alert-banner {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        color: #856404;
+        padding: 12px 20px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .section-title {
+        padding: 20px 20px 10px;
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="nav-controls">
+      <div style="margin-bottom: 10px; font-size: 14px">页面切换</div>
+      <button class="nav-btn" onclick="showPage('login')">登录</button>
+      <button class="nav-btn" onclick="showPage('home')">首页</button>
+      <button class="nav-btn" onclick="showPage('purchase')">申请</button>
+      <button class="nav-btn" onclick="showPage('approval')">审批</button>
+      <button class="nav-btn" onclick="showPage('approval-detail')">审批详情</button>
+      <button class="nav-btn" onclick="showPage('inventory')">库存</button>
+      <button class="nav-btn" onclick="showPage('profile')">我的</button>
+      <div style="margin: 10px 0; font-size: 12px; color: #ccc">个人中心子页面</div>
+      <button class="nav-btn" onclick="showPage('profile-edit')">信息编辑</button>
+      <button class="nav-btn" onclick="showPage('my-requests')">我的申请</button>
+      <button class="nav-btn" onclick="showPage('usage-stats')">使用统计</button>
+      <button class="nav-btn" onclick="showPage('messages')">消息中心</button>
+      <button class="nav-btn" onclick="showPage('settings')">系统设置</button>
+    </div>
+
+    <div class="phone-frame">
+      <div class="phone-screen">
+        <!-- 登录页面 -->
+        <div class="page active" id="login">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span>🔋 100%</span>
+          </div>
+          <div class="login-container">
+            <div class="login-logo">🧪</div>
+            <div class="login-title">实验室试剂管理</div>
+            <div class="login-subtitle">高效管理，科研无忧</div>
+            <button class="wechat-login-btn" onclick="showPage('home')">
+              <span>💬</span>
+              微信一键登录
+            </button>
+          </div>
+        </div>
+
+        <!-- 首页 -->
+        <div class="page" id="home">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span>🔋 100%</span>
+          </div>
+          <div class="home-banner">
+            <div class="welcome-text">你好，张博士</div>
+            <div class="lab-info">生物医学工程实验室 · 今日有3项待处理</div>
+          </div>
+          <div class="content">
+            <div class="quick-actions">
+              <div class="action-card" onclick="showPage('purchase')">
+                <div class="action-icon">📝</div>
+                <div class="action-title">采购申请</div>
+                <div class="action-desc">提交新的试剂申请</div>
+              </div>
+              <div class="action-card" onclick="showPage('inventory')">
+                <div class="action-icon">📦</div>
+                <div class="action-title">库存查询</div>
+                <div class="action-desc">查看库存状态</div>
+              </div>
+              <div class="action-card" onclick="showPage('approval')">
+                <div class="action-icon">✅</div>
+                <div class="action-title">审批中心</div>
+                <div class="action-desc">处理待审事项</div>
+              </div>
+              <div class="action-card">
+                <div class="action-icon">📊</div>
+                <div class="action-title">使用记录</div>
+                <div class="action-desc">记录试剂使用</div>
+              </div>
+            </div>
+
+            <div class="alert-banner">
+              <span>⚠️</span>
+              <span>3种试剂库存不足，5种试剂即将过期</span>
+            </div>
+
+            <div class="stats-section">
+              <div class="stats-title">本月统计</div>
+              <div class="stats-grid">
+                <div class="stat-item">
+                  <div class="stat-number">12</div>
+                  <div class="stat-label">采购申请</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-number">89</div>
+                  <div class="stat-label">库存种类</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-number">156</div>
+                  <div class="stat-label">使用记录</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab-item active" onclick="showPage('home')">
+              <div class="tab-icon">🏠</div>
+              <div class="tab-text">首页</div>
+            </div>
+            <div class="tab-item" onclick="showPage('purchase')">
+              <div class="tab-icon">📝</div>
+              <div class="tab-text">申请</div>
+            </div>
+            <div class="tab-item" onclick="showPage('approval')">
+              <div class="tab-icon">✅</div>
+              <div class="tab-text">审批</div>
+            </div>
+            <div class="tab-item" onclick="showPage('inventory')">
+              <div class="tab-icon">📦</div>
+              <div class="tab-text">库存</div>
+            </div>
+            <div class="tab-item" onclick="showPage('profile')">
+              <div class="tab-icon">👤</div>
+              <div class="tab-text">我的</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 采购申请页面 -->
+        <div class="page" id="purchase">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span>🔋 100%</span>
+          </div>
+          <div class="header">
+            <button class="back-btn" onclick="showPage('home')">‹</button>
+            采购申请
+          </div>
+          <div class="content">
+            <div class="form-group">
+              <div class="form-label">试剂名称</div>
+              <input type="text" class="form-input" placeholder="请输入试剂名称" value="盐酸多柔比星" />
+            </div>
+            <div class="form-group">
+              <div class="form-label">CAS号</div>
+              <input type="text" class="form-input" placeholder="请输入CAS号" value="25316-40-9" />
+            </div>
+            <div class="form-group">
+              <div class="form-label">规格型号</div>
+              <input type="text" class="form-input" placeholder="请输入规格型号" value="25mg/瓶" />
+            </div>
+            <div class="form-group">
+              <div class="form-label">申请数量</div>
+              <input type="number" class="form-input" placeholder="请输入数量" value="5" />
+            </div>
+            <div class="form-group">
+              <div class="form-label">预估单价 (元)</div>
+              <input type="number" class="form-input" placeholder="请输入预估单价" value="450" />
+            </div>
+            <div class="form-group">
+              <div class="form-label">使用目的</div>
+              <textarea class="form-input form-textarea" placeholder="请详细说明使用目的和实验方案">
+用于细胞凋亡实验，研究肿瘤细胞对化疗药物的敏感性。实验预计需要进行5个浓度梯度的处理...</textarea
+              >
+            </div>
+            <div class="form-group">
+              <div class="form-label">紧急程度</div>
+              <select class="form-input">
+                <option>普通</option>
+                <option selected>紧急</option>
+                <option>非常紧急</option>
+              </select>
+            </div>
+            <button class="submit-btn">提交申请</button>
+          </div>
+        </div>
+
+        <!-- 审批页面 -->
+        <div class="page" id="approval">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span>🔋 100%</span>
+          </div>
+          <div class="header">
+            <button class="back-btn" onclick="showPage('home')">‹</button>
+            审批中心
+          </div>
+          <div class="content">
+            <div class="section-title">待我审批 (3)</div>
+
+            <div class="list-item" onclick="showPage('approval-detail')">
+              <div class="item-header">
+                <div class="item-title">DMEM培养基</div>
+                <div class="status-badge status-pending">待审批</div>
+              </div>
+              <div class="item-details">
+                申请人: 李同学 | 数量: 10瓶 | 预算: ¥1,200
+                <br />用途: 细胞培养实验用培养基
+              </div>
+              <div class="item-meta">
+                <span>申请时间: 2025-08-29 14:30</span>
+                <span>紧急程度: 普通</span>
+              </div>
+            </div>
+
+            <div class="list-item" onclick="showPage('approval-detail')">
+              <div class="item-header">
+                <div class="item-title">Taq DNA聚合酶</div>
+                <div class="status-badge status-pending">待审批</div>
+              </div>
+              <div class="item-details">
+                申请人: 王同学 | 数量: 2支 | 预算: ¥800
+                <br />用途: PCR扩增实验
+              </div>
+              <div class="item-meta">
+                <span>申请时间: 2025-08-29 11:15</span>
+                <span>紧急程度: 紧急</span>
+              </div>
+            </div>
+
+            <div class="list-item">
+              <div class="item-header">
+                <div class="item-title">胰蛋白酶</div>
+                <div class="status-badge status-pending">待审批</div>
+              </div>
+              <div class="item-details">
+                申请人: 陈同学 | 数量: 3瓶 | 预算: ¥450
+                <br />用途: 细胞消化传代
+              </div>
+              <div class="item-meta">
+                <span>申请时间: 2025-08-29 09:20</span>
+                <span>紧急程度: 普通</span>
+              </div>
+            </div>
+
+            <div class="section-title">最近已审批</div>
+
+            <div class="list-item">
+              <div class="item-header">
+                <div class="item-title">FITC荧光染料</div>
+                <div class="status-badge status-approved">已批准</div>
+              </div>
+              <div class="item-details">申请人: 赵同学 | 数量: 1g | 预算: ¥680</div>
+              <div class="item-meta">
+                <span>审批时间: 2025-08-28 16:45</span>
+                <span>审批人: 我</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 审批详情页面 -->
+        <div class="page" id="approval-detail">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span>🔋 100%</span>
+          </div>
+          <div class="header">
+            <button class="back-btn" onclick="showPage('approval')">‹</button>
+            审批详情
+          </div>
+          <div class="content">
+            <!-- 申请信息 -->
+            <div style="background: white; padding: 20px; margin-bottom: 10px">
+              <div style="font-size: 18px; font-weight: 600; margin-bottom: 15px; color: #333">申请信息</div>
+              <div style="display: grid; grid-template-columns: 80px 1fr; gap: 10px; font-size: 14px; line-height: 1.8">
+                <span style="color: #666">试剂名称:</span><span>DMEM培养基</span>
+                <span style="color: #666">申请人:</span><span>李同学 (生物医学工程实验室)</span>
+                <span style="color: #666">申请数量:</span><span>10瓶 × 500ml/瓶</span>
+                <span style="color: #666">预估单价:</span><span>¥120/瓶</span> <span style="color: #666">总预算:</span
+                ><span style="font-weight: 600; color: #667eea">¥1,200</span> <span style="color: #666">紧急程度:</span
+                ><span>普通</span>
+              </div>
+              <div style="margin-top: 15px">
+                <span style="color: #666; font-size: 14px">使用目的:</span>
+                <div
+                  style="
+                    background: #f8f9ff;
+                    padding: 12px;
+                    border-radius: 8px;
+                    margin-top: 8px;
+                    font-size: 14px;
+                    line-height: 1.6;
+                  "
+                >
+                  用于HEK293细胞培养实验，研究基因表达调控机制。预计实验周期为2个月，需要进行多批次细胞培养和传代。
+                </div>
+              </div>
+            </div>
+
+            <!-- 审批流程 -->
+            <div style="background: white; padding: 20px; margin-bottom: 10px">
+              <div style="font-size: 18px; font-weight: 600; margin-bottom: 20px; color: #333">审批流程</div>
+              <div class="approval-flow">
+                <div class="flow-step completed">
+                  <div class="step-icon">✓</div>
+                  <div class="step-info">
+                    <div class="step-title">申请提交</div>
+                    <div class="step-time">2025-08-29 14:30</div>
+                    <div class="step-user">李同学</div>
+                  </div>
+                </div>
+                <div class="flow-line completed"></div>
+                <div class="flow-step current">
+                  <div class="step-icon">👨‍🏫</div>
+                  <div class="step-info">
+                    <div class="step-title">导师审批</div>
+                    <div class="step-time">待处理</div>
+                    <div class="step-user">张博士 (当前审批人)</div>
+                  </div>
+                </div>
+                <div class="flow-line"></div>
+                <div class="flow-step">
+                  <div class="step-icon">👨‍💼</div>
+                  <div class="step-info">
+                    <div class="step-title">实验室主任</div>
+                    <div class="step-time">等待中</div>
+                    <div class="step-user">王主任</div>
+                  </div>
+                </div>
+                <div class="flow-line"></div>
+                <div class="flow-step">
+                  <div class="step-icon">🛒</div>
+                  <div class="step-info">
+                    <div class="step-title">采购部门</div>
+                    <div class="step-time">等待中</div>
+                    <div class="step-user">采购部</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 审批操作 -->
+            <div style="background: white; padding: 20px">
+              <div style="font-size: 16px; font-weight: 600; margin-bottom: 15px">审批意见</div>
+              <textarea
+                class="form-input form-textarea"
+                placeholder="请输入审批意见(可选)"
+                style="margin-bottom: 20px"
+              ></textarea>
+              <div style="display: flex; gap: 10px">
+                <button
+                  style="
+                    flex: 1;
+                    padding: 14px;
+                    background: #dc3545;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                  "
+                >
+                  拒绝
+                </button>
+                <button
+                  style="
+                    flex: 1;
+                    padding: 14px;
+                    background: #ffc107;
+                    color: #333;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                  "
+                >
+                  退回修改
+                </button>
+                <button
+                  style="
+                    flex: 2;
+                    padding: 14px;
+                    background: linear-gradient(135deg, #28a745, #20c997);
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                  "
+                >
+                  批准通过
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 库存页面 -->
+        <div class="page" id="inventory">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span>🔋 100%</span>
+          </div>
+          <div class="header">
+            <button class="back-btn" onclick="showPage('home')">‹</button>
+            库存管理
+          </div>
+          <div class="content">
+            <div class="search-bar">
+              <input type="text" class="search-input" placeholder="🔍 搜索试剂名称、CAS号" />
+            </div>
+            <div class="filter-tabs">
+              <div class="filter-tab active">全部</div>
+              <div class="filter-tab">缓冲液</div>
+              <div class="filter-tab">酶类</div>
+              <div class="filter-tab">染料</div>
+              <div class="filter-tab">低库存</div>
+            </div>
+
+            <div class="inventory-item">
+              <div class="reagent-info">
+                <div class="reagent-name">DMEM培养基</div>
+                <div class="reagent-details">
+                  规格: 500ml/瓶<br />
+                  位置: 4°C冰箱A-2层<br />
+                  过期时间: 2025-12-15
+                </div>
+              </div>
+              <div class="stock-info">
+                <div class="stock-number">15</div>
+                <div class="stock-unit">瓶</div>
+              </div>
+            </div>
+
+            <div class="inventory-item">
+              <div class="reagent-info">
+                <div class="reagent-name">Taq聚合酶</div>
+                <div class="reagent-details">
+                  规格: 500U/支<br />
+                  位置: -20°C冰箱B-1层<br />
+                  过期时间: 2026-03-20
+                </div>
+              </div>
+              <div class="stock-info">
+                <div class="stock-number low-stock">2</div>
+                <div class="stock-unit">支</div>
+              </div>
+            </div>
+
+            <div class="inventory-item">
+              <div class="reagent-info">
+                <div class="reagent-name">PBS缓冲液</div>
+                <div class="reagent-details">
+                  规格: 1L/瓶<br />
+                  位置: 常温试剂柜C-3<br />
+                  过期时间: 2025-10-30
+                </div>
+              </div>
+              <div class="stock-info">
+                <div class="stock-number">8</div>
+                <div class="stock-unit">L</div>
+              </div>
+            </div>
+
+            <div class="inventory-item">
+              <div class="reagent-info">
+                <div class="reagent-name">FITC荧光染料</div>
+                <div class="reagent-details">
+                  规格: 1mg/支<br />
+                  位置: -20°C避光保存<br />
+                  过期时间: 2025-09-15
+                </div>
+              </div>
+              <div class="stock-info">
+                <div class="stock-number low-stock">1</div>
+                <div class="stock-unit">mg</div>
+              </div>
+            </div>
+
+            <div class="inventory-item">
+              <div class="reagent-info">
+                <div class="reagent-name">胰蛋白酶</div>
+                <div class="reagent-details">
+                  规格: 25mg/瓶<br />
+                  位置: -20°C冰箱A-3层<br />
+                  过期时间: 2026-01-10
+                </div>
+              </div>
+              <div class="stock-info">
+                <div class="stock-number">6</div>
+                <div class="stock-unit">瓶</div>
+              </div>
+            </div>
+          </div>
+          <div class="floating-add">+</div>
+          <div class="tab-bar">
+            <div class="tab-item" onclick="showPage('home')">
+              <div class="tab-icon">🏠</div>
+              <div class="tab-text">首页</div>
+            </div>
+            <div class="tab-item" onclick="showPage('purchase')">
+              <div class="tab-icon">📝</div>
+              <div class="tab-text">申请</div>
+            </div>
+            <div class="tab-item" onclick="showPage('approval')">
+              <div class="tab-icon">✅</div>
+              <div class="tab-text">审批</div>
+            </div>
+            <div class="tab-item active" onclick="showPage('inventory')">
+              <div class="tab-icon">📦</div>
+              <div class="tab-text">库存</div>
+            </div>
+            <div class="tab-item" onclick="showPage('profile')">
+              <div class="tab-icon">👤</div>
+              <div class="tab-text">我的</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 个人中心页面 -->
+        <div class="page" id="profile">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span>🔋 100%</span>
+          </div>
+          <div class="header">
+            <button class="back-btn" onclick="showPage('home')">‹</button>
+            个人中心
+          </div>
+          <div class="content">
+            <div style="background: white; padding: 30px 20px; text-align: center; border-bottom: 1px solid #f0f0f0">
+              <div
+                style="
+                  width: 80px;
+                  height: 80px;
+                  background: linear-gradient(135deg, #667eea, #764ba2);
+                  border-radius: 50%;
+                  margin: 0 auto 15px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  color: white;
+                  font-size: 32px;
+                "
+              >
+                👨‍🔬
+              </div>
+              <div style="font-size: 20px; font-weight: 600; margin-bottom: 5px">张博士</div>
+              <div style="color: #666; font-size: 14px">生物医学工程实验室 · 博士研究生</div>
+            </div>
+
+            <div class="list-item">
+              <div style="display: flex; align-items: center; gap: 15px">
+                <div style="font-size: 20px">📋</div>
+                <div style="flex: 1">
+                  <div class="item-title">我的申请</div>
+                  <div style="font-size: 12px; color: #666">查看申请历史和状态</div>
+                </div>
+                <div style="color: #667eea">›</div>
+              </div>
+            </div>
+
+            <div class="list-item">
+              <div style="display: flex; align-items: center; gap: 15px">
+                <div style="font-size: 20px">📊</div>
+                <div style="flex: 1">
+                  <div class="item-title">使用统计</div>
+                  <div style="font-size: 12px; color: #666">查看试剂使用记录</div>
+                </div>
+                <div style="color: #667eea">›</div>
+              </div>
+            </div>
+
+            <div class="list-item">
+              <div style="display: flex; align-items: center; gap: 15px">
+                <div style="font-size: 20px">🔔</div>
+                <div style="flex: 1">
+                  <div class="item-title">消息中心</div>
+                  <div style="font-size: 12px; color: #666">审批通知和系统消息</div>
+                </div>
+                <div style="background: #ff6b6b; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px">
+                  3
+                </div>
+                <div style="color: #667eea">›</div>
+              </div>
+            </div>
+
+            <div class="list-item">
+              <div style="display: flex; align-items: center; gap: 15px">
+                <div style="font-size: 20px">⚙️</div>
+                <div style="flex: 1">
+                  <div class="item-title">系统设置</div>
+                  <div style="font-size: 12px; color: #666">通知设置和账户管理</div>
+                </div>
+                <div style="color: #667eea">›</div>
+              </div>
+            </div>
+
+            <div style="padding: 20px">
+              <button
+                style="
+                  width: 100%;
+                  padding: 16px;
+                  background: transparent;
+                  border: 1px solid #ddd;
+                  border-radius: 8px;
+                  color: #666;
+                  font-size: 16px;
+                "
+              >
+                退出登录
+              </button>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab-item" onclick="showPage('home')">
+              <div class="tab-icon">🏠</div>
+              <div class="tab-text">首页</div>
+            </div>
+            <div class="tab-item" onclick="showPage('purchase')">
+              <div class="tab-icon">📝</div>
+              <div class="tab-text">申请</div>
+            </div>
+            <div class="tab-item" onclick="showPage('approval')">
+              <div class="tab-icon">✅</div>
+              <div class="tab-text">审批</div>
+            </div>
+            <div class="tab-item" onclick="showPage('inventory')">
+              <div class="tab-icon">📦</div>
+              <div class="tab-text">库存</div>
+            </div>
+            <div class="tab-item active" onclick="showPage('profile')">
+              <div class="tab-icon">👤</div>
+              <div class="tab-text">我的</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 消息中心页面 -->
+        <div class="page" id="messages">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span>🔋 100%</span>
+          </div>
+          <div class="header">
+            <button class="back-btn" onclick="showPage('profile')">‹</button>
+            消息中心
+          </div>
+          <div class="content">
+            <div class="filter-tabs">
+              <div class="filter-tab active">全部</div>
+              <div class="filter-tab">审批通知</div>
+              <div class="filter-tab">库存预警</div>
+              <div class="filter-tab">系统消息</div>
+            </div>
+
+            <div class="list-item" style="border-left: 4px solid #28a745">
+              <div class="item-header">
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <span style="font-size: 16px">✅</span>
+                  <div class="item-title">申请已通过</div>
+                </div>
+                <div style="font-size: 12px; color: #28a745; font-weight: 600">新消息</div>
+              </div>
+              <div class="item-details">您申请的"无血清培养基"已通过全部审批流程，预计2-3个工作日到货。</div>
+              <div class="item-meta">
+                <span>2025-08-29 16:30</span>
+                <span>审批通知</span>
+              </div>
+            </div>
+
+            <div class="list-item" style="border-left: 4px solid #ffc107">
+              <div class="item-header">
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <span style="font-size: 16px">⚠️</span>
+                  <div class="item-title">库存预警</div>
+                </div>
+                <div style="font-size: 12px; color: #ffc107; font-weight: 600">预警</div>
+              </div>
+              <div class="item-details">"FITC荧光染料"库存不足，当前仅剩1mg，建议及时补充。</div>
+              <div class="item-meta">
+                <span>2025-08-29 14:20</span>
+                <span>库存预警</span>
+              </div>
+            </div>
+
+            <div class="list-item" style="border-left: 4px solid #dc3545">
+              <div class="item-header">
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <span style="font-size: 16px">⏰</span>
+                  <div class="item-title">试剂即将过期</div>
+                </div>
+                <div style="font-size: 12px; color: #dc3545; font-weight: 600">重要</div>
+              </div>
+              <div class="item-details">"FITC荧光染料"将于15天后过期(2025-09-15)，请尽快使用。</div>
+              <div class="item-meta">
+                <span>2025-08-29 09:00</span>
+                <span>过期提醒</span>
+              </div>
+            </div>
+
+            <div class="list-item" style="opacity: 0.7">
+              <div class="item-header">
+                <div style="display: flex; align-items: center; gap: 8px">
+                  <span style="font-size: 16px">📋</span>
+                  <div class="item-title">申请需要修改</div>
+                </div>
+                <div style="font-size: 12px; color: #666">已读</div>
+              </div>
+              <div class="item-details">您的"Western Blot试剂盒"申请被退回，请补充实验方案详情后重新提交。</div>
+              <div class="item-meta">
+                <span>2025-08-28 11:45</span>
+                <span>审批通知</span>
+              </div>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab-item" onclick="showPage('home')">
+              <div class="tab-icon">🏠</div>
+              <div class="tab-text">首页</div>
+            </div>
+            <div class="tab-item" onclick="showPage('purchase')">
+              <div class="tab-icon">📝</div>
+              <div class="tab-text">申请</div>
+            </div>
+            <div class="tab-item" onclick="showPage('approval')">
+              <div class="tab-icon">✅</div>
+              <div class="tab-text">审批</div>
+            </div>
+            <div class="tab-item" onclick="showPage('inventory')">
+              <div class="tab-icon">📦</div>
+              <div class="tab-text">库存</div>
+            </div>
+            <div class="tab-item active" onclick="showPage('profile')">
+              <div class="tab-icon">👤</div>
+              <div class="tab-text">我的</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 系统设置页面 -->
+        <div class="page" id="settings">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span>🔋 100%</span>
+          </div>
+          <div class="header">
+            <button class="back-btn" onclick="showPage('profile')">‹</button>
+            系统设置
+          </div>
+          <div class="content">
+            <div style="background: white; margin-bottom: 10px">
+              <div
+                class="section-title"
+                style="padding: 15px 20px 10px; font-size: 16px; border-bottom: 1px solid #f0f0f0"
+              >
+                通知设置
+              </div>
+
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  padding: 15px 20px;
+                  border-bottom: 1px solid #f0f0f0;
+                "
+              >
+                <div>
+                  <div style="font-size: 16px; margin-bottom: 2px">审批通知</div>
+                  <div style="font-size: 12px; color: #666">申请状态变更时推送通知</div>
+                </div>
+                <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                  <div class="toggle-slider"></div>
+                </div>
+              </div>
+
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  padding: 15px 20px;
+                  border-bottom: 1px solid #f0f0f0;
+                "
+              >
+                <div>
+                  <div style="font-size: 16px; margin-bottom: 2px">库存预警</div>
+                  <div style="font-size: 12px; color: #666">低库存和过期提醒</div>
+                </div>
+                <div class="toggle-switch active" onclick="toggleSwitch(this)">
+                  <div class="toggle-slider"></div>
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px">
+                <div>
+                  <div style="font-size: 16px; margin-bottom: 2px">微信通知</div>
+                  <div style="font-size: 12px; color: #666">通过微信服务号推送重要消息</div>
+                </div>
+                <div class="toggle-switch" onclick="toggleSwitch(this)">
+                  <div class="toggle-slider"></div>
+                </div>
+              </div>
+            </div>
+
+            <div style="background: white; margin-bottom: 10px">
+              <div class="section-title" style="padding: 15px 20px 10px; border-bottom: 1px solid #f0f0f0">
+                账户设置
+              </div>
+
+              <div class="list-item" onclick="showPage('profile-edit')">
+                <div style="display: flex; align-items: center; gap: 15px">
+                  <div style="font-size: 18px">👤</div>
+                  <div style="flex: 1">
+                    <div style="font-size: 16px">个人信息</div>
+                    <div style="font-size: 12px; color: #666">修改个人资料和实验室信息</div>
+                  </div>
+                  <div style="color: #667eea">›</div>
+                </div>
+              </div>
+
+              <div class="list-item">
+                <div style="display: flex; align-items: center; gap: 15px">
+                  <div style="font-size: 18px">🔒</div>
+                  <div style="flex: 1">
+                    <div style="font-size: 16px">隐私设置</div>
+                    <div style="font-size: 12px; color: #666">数据隐私和权限管理</div>
+                  </div>
+                  <div style="color: #667eea">›</div>
+                </div>
+              </div>
+
+              <div class="list-item">
+                <div style="display: flex; align-items: center; gap: 15px">
+                  <div style="font-size: 18px">📱</div>
+                  <div style="flex: 1">
+                    <div style="font-size: 16px">绑定微信</div>
+                    <div style="font-size: 12px; color: #666">当前已绑定: wx_zhang***</div>
+                  </div>
+                  <div style="color: #28a745; font-size: 12px">已绑定</div>
+                </div>
+              </div>
+            </div>
+
+            <div style="background: white; margin-bottom: 10px">
+              <div class="section-title" style="padding: 15px 20px 10px; border-bottom: 1px solid #f0f0f0">
+                其他设置
+              </div>
+
+              <div class="list-item">
+                <div style="display: flex; align-items: center; gap: 15px">
+                  <div style="font-size: 18px">❓</div>
+                  <div style="flex: 1">
+                    <div style="font-size: 16px">帮助中心</div>
+                    <div style="font-size: 12px; color: #666">使用指南和常见问题</div>
+                  </div>
+                  <div style="color: #667eea">›</div>
+                </div>
+              </div>
+
+              <div class="list-item">
+                <div style="display: flex; align-items: center; gap: 15px">
+                  <div style="font-size: 18px">📞</div>
+                  <div style="flex: 1">
+                    <div style="font-size: 16px">联系我们</div>
+                    <div style="font-size: 12px; color: #666">技术支持和意见反馈</div>
+                  </div>
+                  <div style="color: #667eea">›</div>
+                </div>
+              </div>
+
+              <div class="list-item">
+                <div style="display: flex; align-items: center; gap: 15px">
+                  <div style="font-size: 18px">ℹ️</div>
+                  <div style="flex: 1">
+                    <div style="font-size: 16px">关于我们</div>
+                    <div style="font-size: 12px; color: #666">版本: v1.2.0</div>
+                  </div>
+                  <div style="color: #667eea">›</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab-item" onclick="showPage('home')">
+              <div class="tab-icon">🏠</div>
+              <div class="tab-text">首页</div>
+            </div>
+            <div class="tab-item" onclick="showPage('purchase')">
+              <div class="tab-icon">📝</div>
+              <div class="tab-text">申请</div>
+            </div>
+            <div class="tab-item" onclick="showPage('approval')">
+              <div class="tab-icon">✅</div>
+              <div class="tab-text">审批</div>
+            </div>
+            <div class="tab-item" onclick="showPage('inventory')">
+              <div class="tab-icon">📦</div>
+              <div class="tab-text">库存</div>
+            </div>
+            <div class="tab-item active" onclick="showPage('profile')">
+              <div class="tab-icon">👤</div>
+              <div class="tab-text">我的</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 个人信息编辑页面 -->
+        <div class="page" id="profile-edit">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span>🔋 100%</span>
+          </div>
+          <div class="header">
+            <button class="back-btn" onclick="showPage('profile')">‹</button>
+            编辑个人信息
+          </div>
+          <div class="content">
+            <div style="text-align: center; padding: 30px 20px; background: white; border-bottom: 1px solid #f0f0f0">
+              <div
+                style="
+                  width: 80px;
+                  height: 80px;
+                  background: linear-gradient(135deg, #667eea, #764ba2);
+                  border-radius: 50%;
+                  margin: 0 auto 15px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  color: white;
+                  font-size: 32px;
+                  position: relative;
+                  cursor: pointer;
+                "
+              >
+                👨‍🔬
+                <div
+                  style="
+                    position: absolute;
+                    bottom: -5px;
+                    right: -5px;
+                    width: 30px;
+                    height: 30px;
+                    background: #28a745;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-size: 12px;
+                  "
+                >
+                  📷
+                </div>
+              </div>
+              <div style="font-size: 12px; color: #666">点击更换头像</div>
+            </div>
+
+            <div class="form-group">
+              <div class="form-label">真实姓名 *</div>
+              <input type="text" class="form-input" value="张博士" />
+            </div>
+            <div class="form-group">
+              <div class="form-label">学号/工号 *</div>
+              <input type="text" class="form-input" value="2021001234" />
+            </div>
+            <div class="form-group">
+              <div class="form-label">手机号码</div>
+              <input type="tel" class="form-input" placeholder="请输入手机号码" value="138****5678" />
+            </div>
+            <div class="form-group">
+              <div class="form-label">邮箱地址</div>
+              <input type="email" class="form-input" placeholder="请输入邮箱地址" value="zhang@university.edu.cn" />
+            </div>
+            <div class="form-group">
+              <div class="form-label">所属实验室 *</div>
+              <select class="form-input">
+                <option selected>生物医学工程实验室</option>
+                <option>分子生物学实验室</option>
+                <option>细胞生物学实验室</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <div class="form-label">导师姓名</div>
+              <input type="text" class="form-input" value="王教授" />
+            </div>
+            <div class="form-group">
+              <div class="form-label">研究方向</div>
+              <textarea class="form-input form-textarea" placeholder="请简要描述研究方向">
+肿瘤细胞生物学，主要研究肿瘤细胞的增殖、凋亡机制及化疗药物敏感性</textarea
+              >
+            </div>
+            <button class="submit-btn" onclick="showPage('profile')">保存修改</button>
+          </div>
+        </div>
+
+        <!-- 我的申请页面 -->
+        <div class="page" id="my-requests">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span>🔋 100%</span>
+          </div>
+          <div class="header">
+            <button class="back-btn" onclick="showPage('profile')">‹</button>
+            我的申请
+          </div>
+          <div class="content">
+            <div class="filter-tabs">
+              <div class="filter-tab active">全部</div>
+              <div class="filter-tab">待审批</div>
+              <div class="filter-tab">已通过</div>
+              <div class="filter-tab">已拒绝</div>
+            </div>
+
+            <div class="list-item">
+              <div class="item-header">
+                <div class="item-title">盐酸多柔比星</div>
+                <div class="status-badge status-pending">审批中</div>
+              </div>
+              <div class="item-details">
+                数量: 5瓶 × 25mg | 预算: ¥2,250
+                <br />当前状态: 导师审批中
+              </div>
+              <div class="item-meta">
+                <span>申请时间: 2025-08-29 15:20</span>
+                <span>审批进度: 1/3</span>
+              </div>
+            </div>
+
+            <div class="list-item">
+              <div class="item-header">
+                <div class="item-title">细胞培养皿</div>
+                <div class="status-badge status-approved">采购中</div>
+              </div>
+              <div class="item-details">
+                数量: 100个 | 预算: ¥300
+                <br />当前状态: 采购部处理中
+              </div>
+              <div class="item-meta">
+                <span>申请时间: 2025-08-28 10:15</span>
+                <span>预计到货: 2025-09-02</span>
+              </div>
+            </div>
+
+            <div class="list-item">
+              <div class="item-header">
+                <div class="item-title">无血清培养基</div>
+                <div class="status-badge status-approved">已完成</div>
+              </div>
+              <div class="item-details">
+                数量: 6瓶 × 500ml | 预算: ¥1,800
+                <br />已到货并入库
+              </div>
+              <div class="item-meta">
+                <span>申请时间: 2025-08-25 09:30</span>
+                <span>完成时间: 2025-08-28 14:20</span>
+              </div>
+            </div>
+
+            <div class="list-item">
+              <div class="item-header">
+                <div class="item-title">Western Blot试剂盒</div>
+                <div class="status-badge status-rejected">已拒绝</div>
+              </div>
+              <div class="item-details">
+                数量: 2盒 | 预算: ¥1,200
+                <br />拒绝理由: 预算超支，建议下月申请
+              </div>
+              <div class="item-meta">
+                <span>申请时间: 2025-08-24 16:40</span>
+                <span>拒绝时间: 2025-08-25 11:20</span>
+              </div>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab-item" onclick="showPage('home')">
+              <div class="tab-icon">🏠</div>
+              <div class="tab-text">首页</div>
+            </div>
+            <div class="tab-item" onclick="showPage('purchase')">
+              <div class="tab-icon">📝</div>
+              <div class="tab-text">申请</div>
+            </div>
+            <div class="tab-item" onclick="showPage('approval')">
+              <div class="tab-icon">✅</div>
+              <div class="tab-text">审批</div>
+            </div>
+            <div class="tab-item" onclick="showPage('inventory')">
+              <div class="tab-icon">📦</div>
+              <div class="tab-text">库存</div>
+            </div>
+            <div class="tab-item active" onclick="showPage('profile')">
+              <div class="tab-icon">👤</div>
+              <div class="tab-text">我的</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 使用统计页面 -->
+        <div class="page" id="usage-stats">
+          <div class="status-bar">
+            <span>9:41</span>
+            <span>🔋 100%</span>
+          </div>
+          <div class="header">
+            <button class="back-btn" onclick="showPage('profile')">‹</button>
+            使用统计
+          </div>
+          <div class="content">
+            <!-- 月度统计概览 -->
+            <div style="background: white; padding: 20px; margin-bottom: 10px">
+              <div style="font-size: 18px; font-weight: 600; margin-bottom: 15px">本月使用概览</div>
+              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px">
+                <div style="background: #f8f9ff; padding: 15px; border-radius: 12px; text-align: center">
+                  <div style="font-size: 24px; font-weight: bold; color: #667eea">23</div>
+                  <div style="font-size: 12px; color: #666">使用次数</div>
+                </div>
+                <div style="background: #f8f9ff; padding: 15px; border-radius: 12px; text-align: center">
+                  <div style="font-size: 24px; font-weight: bold; color: #667eea">15</div>
+                  <div style="font-size: 12px; color: #666">试剂种类</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 时间筛选 -->
+            <div class="filter-tabs">
+              <div class="filter-tab active">本月</div>
+              <div class="filter-tab">本周</div>
+              <div class="filter-tab">近3月</div>
+              <div class="filter-tab">全部</div>
+            </div>
+
+            <!-- 使用记录列表 -->
+            <div class="section-title">使用记录</div>
+
+            <div class="list-item">
+              <div class="item-header">
+                <div class="item-title">DMEM培养基</div>
+                <div style="font-size: 12px; color: #667eea; font-weight: 600">-50ml</div>
+              </div>
+              <div class="item-details">
+                用途: HEK293细胞培养传代
+                <br />剩余库存: 450ml
+              </div>
+              <div class="item-meta">
+                <span>使用时间: 2025-08-29 14:15</span>
+                <span>位置: 4°C冰箱A-2</span>
+              </div>
+            </div>
+
+            <div class="list-item">
+              <div class="item-header">
+                <div class="item-title">Taq DNA聚合酶</div>
+                <div style="font-size: 12px; color: #667eea; font-weight: 600">-5μl</div>
+              </div>
+              <div class="item-details">
+                用途: PCR扩增目的基因片段
+                <br />剩余库存: 245μl
+              </div>
+              <div class="item-meta">
+                <span>使用时间: 2025-08-29 10:30</span>
+                <span>位置: -20°C冰箱B-1</span>
+              </div>
+            </div>
+
+            <div class="list-item">
+              <div class="item-header">
+                <div class="item-title">PBS缓冲液</div>
+                <div style="font-size: 12px; color: #667eea; font-weight: 600">-200ml</div>
+              </div>
+              <div class="item-details">
+                用途: 细胞洗涤和稀释
+                <br />剩余库存: 800ml
+              </div>
+              <div class="item-meta">
+                <span>使用时间: 2025-08-28 16:45</span>
+                <span>位置: 常温试剂柜C-3</span>
+              </div>
+            </div>
+          </div>
+          <div class="tab-bar">
+            <div class="tab-item" onclick="showPage('home')">
+              <div class="tab-icon">🏠</div>
+              <div class="tab-text">首页</div>
+            </div>
+            <div class="tab-item" onclick="showPage('purchase')">
+              <div class="tab-icon">📝</div>
+              <div class="tab-text">申请</div>
+            </div>
+            <div class="tab-item" onclick="showPage('approval')">
+              <div class="tab-icon">✅</div>
+              <div class="tab-text">审批</div>
+            </div>
+            <div class="tab-item" onclick="showPage('inventory')">
+              <div class="tab-icon">📦</div>
+              <div class="tab-text">库存</div>
+            </div>
+            <div class="tab-item active" onclick="showPage('profile')">
+              <div class="tab-icon">👤</div>
+              <div class="tab-text">我的</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      /* 开关样式 */
+      .toggle-switch {
+        width: 50px;
+        height: 30px;
+        background: #ccc;
+        border-radius: 15px;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .toggle-switch.active {
+        background: #667eea;
+      }
+
+      .toggle-slider {
+        width: 26px;
+        height: 26px;
+        background: white;
+        border-radius: 50%;
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .toggle-switch.active .toggle-slider {
+        transform: translateX(20px);
+      }
+
+      /* 审批流程样式 */
+      .approval-flow {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+
+      .flow-step {
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+        position: relative;
+        padding: 10px 0;
+      }
+
+      .step-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: bold;
+        background: #f0f0f0;
+        color: #999;
+        flex-shrink: 0;
+      }
+
+      .flow-step.completed .step-icon {
+        background: #28a745;
+        color: white;
+      }
+
+      .flow-step.current .step-icon {
+        background: #667eea;
+        color: white;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0% {
+          box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7);
+        }
+        70% {
+          box-shadow: 0 0 0 10px rgba(102, 126, 234, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+        }
+      }
+
+      .step-info {
+        flex: 1;
+      }
+
+      .step-title {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .step-time {
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 2px;
+      }
+
+      .step-user {
+        font-size: 12px;
+        color: #999;
+      }
+
+      .flow-line {
+        width: 2px;
+        height: 20px;
+        background: #e0e0e0;
+        margin-left: 19px;
+        margin-top: -10px;
+        margin-bottom: -10px;
+      }
+
+      .flow-line.completed {
+        background: #28a745;
+      }
+    </style>
+
+    <script>
+      function showPage(pageId) {
+        // 隐藏所有页面
+        document.querySelectorAll('.page').forEach((page) => {
+          page.classList.remove('active')
+        })
+
+        // 显示指定页面
+        document.getElementById(pageId).classList.add('active')
+
+        // 更新底部导航状态
+        document.querySelectorAll('.tab-item').forEach((tab) => {
+          tab.classList.remove('active')
+        })
+
+        // 激活对应的tab
+        const currentPageElement = document.getElementById(pageId)
+        if (currentPageElement && currentPageElement.querySelector('.tab-bar')) {
+          const activeTab = currentPageElement.querySelector('.tab-bar .tab-item.active')
+          if (activeTab) {
+            activeTab.classList.add('active')
+          }
+        }
+      }
+
+      function toggleSwitch(element) {
+        element.classList.toggle('active')
+      }
+
+      // 初始化显示登录页面
+      document.addEventListener('DOMContentLoaded', function () {
+        showPage('login')
+      })
+    </script>
+  </body>
+</html>
