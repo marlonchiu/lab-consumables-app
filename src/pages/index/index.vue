@@ -1,41 +1,40 @@
 <template>
-  <view class="content">
-    <image class="logo" src="/static/logo.png" />
-    <view class="text-area">
-      <text class="title">{{ title }}</text>
-    </view>
+  <view class="content columnCC">
+    <van-button type="primary">主要按钮</van-button>
+    <van-form @submit="onSubmit">
+      <van-cell-group inset>
+        <van-field
+          v-model="username"
+          name="username"
+          label="用户名"
+          placeholder="用户名"
+          :rules="[{ required: true, message: '请填写用户名' }]"
+        />
+        <van-field
+          v-model="password"
+          type="password"
+          name="password"
+          label="密码"
+          placeholder="密码"
+          :rules="[{ required: true, message: '请填写密码' }]"
+        />
+      </van-cell-group>
+      <div style="margin: 16px">
+        <van-button round block type="primary" native-type="submit"> 提交 </van-button>
+      </div>
+    </van-form>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
+
 const title = ref('Hello')
+const username = ref('')
+const password = ref('')
+const onSubmit = (values) => {
+  console.log('submit', values)
+}
 </script>
 
-<style>
-.content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.logo {
-  height: 200rpx;
-  width: 200rpx;
-  margin-top: 200rpx;
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: 50rpx;
-}
-
-.text-area {
-  display: flex;
-  justify-content: center;
-}
-
-.title {
-  font-size: 36rpx;
-  color: #8f8f94;
-}
-</style>
+<style></style>
