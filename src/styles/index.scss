@@ -1,2 +1,5 @@
-@import './sugar.scss';
+@use './sugar.scss';
 
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
