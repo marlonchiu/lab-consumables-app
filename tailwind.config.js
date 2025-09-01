@@ -1,12 +1,62 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  // 这里给出了一份 uni-app /taro 通用示例，具体要根据你自己项目的目录结构进行配置
-  // 不在 content 包括的文件内，你编写的 class，是不会生成对应的css工具类的
   content: ['./public/index.html', './src/**/*.{html,js,ts,jsx,tsx,vue}'],
-  // 其他配置项
-  // ...
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          50: '#fef2f2',
+          100: '#fee2e2',
+          200: '#fecaca',
+          300: '#fca5a5',
+          400: '#f87171',
+          500: '#952b2b',
+          600: '#7f1d1d',
+          700: '#6b1717',
+          800: '#581c1c',
+          900: '#4c1d1d'
+        },
+        secondary: {
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#334155',
+          800: '#1e293b',
+          900: '#0f172a'
+        },
+        accent: {
+          50: '#fefce8',
+          100: '#fef9c3',
+          200: '#fef08a',
+          300: '#fde047',
+          400: '#facc15',
+          500: '#eab308',
+          600: '#ca8a04',
+          700: '#a16207',
+          800: '#854d0e',
+          900: '#713f12'
+        }
+      },
+      fontFamily: {
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif']
+      },
+      borderRadius: {
+        xl: '12px',
+        '2xl': '16px',
+        '3xl': '20px'
+      },
+      boxShadow: {
+        soft: '0 2px 8px rgba(149, 43, 43, 0.1)',
+        medium: '0 4px 16px rgba(149, 43, 43, 0.15)',
+        strong: '0 8px 24px rgba(149, 43, 43, 0.2)'
+      }
+    }
+  },
   corePlugins: {
-    // 小程序不需要 preflight，因为这主要是给 h5 的，如果你要同时开发小程序和 h5 端，你应该使用环境变量来控制它
     preflight: false
   }
 }

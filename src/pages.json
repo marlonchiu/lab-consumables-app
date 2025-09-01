@@ -32,20 +32,28 @@
     }
   ],
   "globalStyle": {
-    "navigationBarTextStyle": "white",
+    "navigationBarTextStyle": "#952b2b",
     "navigationBarTitleText": "实验室试剂管理",
-    "navigationBarBackgroundColor": "#667eea",
+    "navigationBarBackgroundColor": "#fff",
     "backgroundColor": "#F7F8FA"
   },
   "tabBar": {
-    "color": "#999999",
-    "selectedColor": "#667eea",
+    "color": "#9ca3af",
+    "selectedColor": "#952b2b",
     "backgroundColor": "#ffffff",
-    "borderStyle": "black",
+    "borderStyle": "white",
+    "height": "60px",
+    "fontSize": "12px",
+    "iconWidth": "24px",
+    "spacing": "4px",
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页"
+        "text": "首页",
+        "iconfont": {
+          "text": "🔍",
+          "fontSize": "16px"
+        }
       },
       {
         "pagePath": "pages/purchase/index",
