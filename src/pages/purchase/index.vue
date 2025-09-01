@@ -66,11 +66,25 @@
             label-class="text-gray-700 font-medium"
             input-class="text-gray-800"
           />
-          <van-field name="urgency" label="紧急程度" label-class="text-gray-700 font-medium">
-            <template #input>
-              <van-picker v-model="formData.urgency" :columns="urgencyOptions" @confirm="onUrgencyConfirm" />
-            </template>
+          <van-field
+            v-model="formData.urgency"
+            name="urgency"
+            label="紧急程度"
+            label-class="text-gray-700 font-medium"
+            is-link
+            readonly
+            placeholder="点击选择紧急程度"
+            @click="showPicker = true"
+          >
           </van-field>
+          <van-popup v-model:show="showPicker" destroy-on-close position="bottom">
+            <van-picker
+              :model-value="pickerValue"
+              :columns="urgencyOptions"
+              :columns-field-names="urgencyFieldName"
+              @confirm="onUrgencyConfirm"
+            />
+          </van-popup>
         </van-cell-group>
       </van-form>
     </view>
@@ -102,11 +116,19 @@ const formData = reactive({
   purpose: '',
   urgency: '普通'
 })
+const showPicker = ref(false)
+const pickerValue = ref(['1'])
+const urgencyOptions = [
+  { key: '1', name: '普通' },
+  { key: '2', name: '紧急' },
+  { key: '3', name: '非常紧急' }
+]
+const urgencyFieldName = { text: 'name', value: 'key' }
 
-const urgencyOptions = ['普通', '紧急', '非常紧急']
-
-const onUrgencyConfirm = (value: string) => {
-  formData.urgency = value
+const onUrgencyConfirm = ({ selectedValues, selectedOptions }) => {
+  formData.urgency = selectedOptions[0]?.name
+  pickerValue.value = selectedValues
+  showPicker.value = false
 }
 
 const onSubmit = (values: any) => {

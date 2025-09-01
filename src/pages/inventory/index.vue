@@ -10,7 +10,7 @@
     <view class="search-bar bg-white p-5 border-b border-gray-100">
       <van-search
         v-model="searchValue"
-        placeholder="🔍 搜索试剂名称、CAS号"
+        placeholder="搜索试剂名称、CAS号"
         background="#f8f9fa"
         shape="round"
         @search="onSearch"

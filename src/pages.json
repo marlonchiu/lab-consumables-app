@@ -50,26 +50,32 @@
       {
         "pagePath": "pages/index/index",
         "text": "首页",
-        "iconfont": {
-          "text": "🔍",
-          "fontSize": "16px"
-        }
+        "iconPath": "static/tabbar/home.png",
+        "selectedIconPath": "static/tabbar/home-active.png"
       },
       {
         "pagePath": "pages/purchase/index",
-        "text": "申请"
+        "text": "申请",
+        "iconPath": "static/tabbar/purchase.png",
+        "selectedIconPath": "static/tabbar/purchase-active.png"
       },
       {
         "pagePath": "pages/approval/index",
-        "text": "审批"
+        "text": "审批",
+        "iconPath": "static/tabbar/approval.png",
+        "selectedIconPath": "static/tabbar/approval-active.png"
       },
       {
         "pagePath": "pages/inventory/index",
-        "text": "库存"
+        "text": "库存",
+        "iconPath": "static/tabbar/inventory.png",
+        "selectedIconPath": "static/tabbar/inventory-active.png"
       },
       {
         "pagePath": "pages/profile/index",
-        "text": "我的"
+        "text": "我的",
+        "iconPath": "static/tabbar/profile.png",
+        "selectedIconPath": "static/tabbar/profile-active.png"
       }
     ]
   }
