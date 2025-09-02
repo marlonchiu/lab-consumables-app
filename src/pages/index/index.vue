@@ -1,17 +1,37 @@
 <template>
   <view class="min-h-screen bg-gray-50">
-    <!-- 顶部横幅 -->
-    <view class="home-banner bg-gradient-to-br from-primary-500 to-primary-700 text-white p-8 relative overflow-hidden">
-      <view class="absolute -top-12 -right-4 w-48 h-48 bg-white bg-opacity-10 rounded-full"></view>
-      <view class="relative z-10">
-        <text class="text-2xl font-semibold mb-2 block">你好，张博士</text>
-        <text class="text-sm opacity-90">生物医学工程实验室 · 今日有3项待处理</text>
+    <!-- 未登录状态 -->
+    <view v-if="!isAuthenticated" class="min-h-screen flex flex-col items-center justify-center p-8">
+      <view class="w-20 h-20 bg-primary-100 rounded-2xl flex items-center justify-center mb-6">
+        <text class="text-3xl">🧪</text>
+      </view>
+      <text class="text-2xl font-bold text-gray-800 mb-2">实验室试剂管理</text>
+      <text class="text-gray-600 mb-8 text-center">请登录以访问系统功能</text>
+      <van-button type="primary" round block class="!bg-primary-500 !border-primary-500 !w-48" @click="goToLogin">
+        立即登录
+      </van-button>
+    </view>
+
+    <!-- 已登录状态 -->
+    <view v-else>
+      <!-- 顶部横幅 -->
+      <view
+        class="home-banner bg-gradient-to-br from-primary-500 to-primary-700 text-white p-8 relative overflow-hidden"
+      >
+        <view class="absolute -top-12 -right-4 w-48 h-48 bg-white bg-opacity-10 rounded-full"></view>
+        <view class="relative z-10">
+          <text class="text-2xl font-semibold mb-2 block">你好，{{ user?.name || '用户' }}</text>
+          <text class="text-sm opacity-90"
+            >{{ user?.laboratory?.name || '实验室' }} · {{ getRoleText(user?.role) }}</text
+          >
+        </view>
       </view>
     </view>
 
     <!-- 快捷操作 -->
     <view class="quick-actions grid grid-cols-2 gap-4 p-5 -mt-10 relative z-20">
       <view
+        v-if="canCreateRequest"
         class="action-card bg-white rounded-2xl p-5 shadow-soft text-center hover:shadow-medium transition-all duration-300"
         @tap="navigateTo('/pages/purchase/index')"
       >
@@ -36,6 +56,7 @@
         <text class="action-desc text-xs text-gray-600">查看库存状态</text>
       </view>
       <view
+        v-if="canApprove"
         class="action-card bg-white rounded-2xl p-5 shadow-soft text-center hover:shadow-medium transition-all duration-300"
         @tap="navigateTo('/pages/approval/index')"
       >
@@ -90,9 +111,49 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted } from 'vue'
+import { useStore } from 'vuex'
+import { UserRole } from '@/utils/supabase'
+import { hasPermission, PERMISSIONS } from '@/utils/permissions'
+
+const store = useStore()
+
+const isAuthenticated = computed(() => store.getters.isAuthenticated)
+const user = computed(() => store.getters.user)
+const userRole = computed(() => store.getters.userRole)
+
+// 权限检查
+const canCreateRequest = computed(() => hasPermission(userRole.value, PERMISSIONS.REQUEST_CREATE))
+
+const canApprove = computed(() => hasPermission(userRole.value, PERMISSIONS.APPROVAL_VIEW))
+
 const navigateTo = (url: string) => {
   uni.navigateTo({ url })
 }
+
+const goToLogin = () => {
+  uni.navigateTo({
+    url: '/pages/login/index'
+  })
+}
+
+const getRoleText = (role?: UserRole) => {
+  switch (role) {
+    case UserRole.STUDENT:
+      return '学生'
+    case UserRole.TEACHER:
+      return '导师'
+    case UserRole.ADMIN:
+      return '管理员'
+    default:
+      return '用户'
+  }
+}
+
+onMounted(() => {
+  // 检查认证状态
+  store.dispatch('checkAuth')
+})
 </script>
 
 <style scoped>

@@ -11,8 +11,10 @@
         >
           👨‍🔬
         </view>
-        <text class="user-name text-xl font-semibold mb-1 block">张博士</text>
-        <text class="user-info text-sm opacity-90">生物医学工程实验室 · 博士研究生</text>
+        <text class="user-name text-xl font-semibold mb-1 block">{{ user?.name || '用户' }}</text>
+        <text class="user-info text-sm opacity-90"
+          >{{ user?.laboratory?.name || '实验室' }} · {{ getRoleText(user?.role) }}</text
+        >
       </view>
     </view>
 
@@ -55,7 +57,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useStore } from 'vuex'
+import { UserRole } from '@/utils/supabase'
+
+const store = useStore()
+
+const user = computed(() => store.getters.user)
+const loading = computed(() => store.getters.loading)
 
 // 菜单项数据
 const menuItems = ref([
@@ -89,6 +98,19 @@ const menuItems = ref([
   }
 ])
 
+const getRoleText = (role?: UserRole) => {
+  switch (role) {
+    case UserRole.STUDENT:
+      return '学生'
+    case UserRole.TEACHER:
+      return '导师'
+    case UserRole.ADMIN:
+      return '管理员'
+    default:
+      return '用户'
+  }
+}
+
 const handleMenuTap = (item: any) => {
   console.log('点击菜单:', item.title)
 
@@ -120,17 +142,30 @@ const handleMenuTap = (item: any) => {
   }
 }
 
-const logout = () => {
+const logout = async () => {
   uni.showModal({
     title: '确认退出',
     content: '确定要退出登录吗？',
-    success: (res) => {
+    success: async (res) => {
       if (res.confirm) {
-        uni.showToast({
-          title: '退出成功',
-          icon: 'success'
-        })
-        // 这里可以添加退出登录的逻辑
+        const result = await store.dispatch('logout')
+        if (result.success) {
+          uni.showToast({
+            title: '退出成功',
+            icon: 'success'
+          })
+          // 跳转到登录页
+          setTimeout(() => {
+            uni.reLaunch({
+              url: '/pages/login/index'
+            })
+          }, 1500)
+        } else {
+          uni.showToast({
+            title: '退出失败',
+            icon: 'error'
+          })
+        }
       }
     }
   })
