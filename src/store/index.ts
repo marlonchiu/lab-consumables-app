@@ -333,6 +333,119 @@ export default createStore<State>({
       } else {
         commit('CLEAR_USER')
       }
+    },
+
+    // 提交采购申请
+    async submitPurchaseRequest({ commit }, requestData) {
+      commit('SET_LOADING', true)
+      commit('SET_ERROR', null)
+
+      try {
+        const { data, error } = await supabase.from('purchase_requests').insert(requestData).select().single()
+
+        if (error) throw error
+
+        return { success: true, data }
+      } catch (error: any) {
+        commit('SET_ERROR', error.message || '提交申请失败')
+        return { success: false, error: error.message }
+      } finally {
+        commit('SET_LOADING', false)
+      }
+    },
+
+    // 获取采购申请列表
+    async fetchPurchaseRequests({ commit }, { status, page = 1, pageSize = 10 }) {
+      commit('SET_LOADING', true)
+
+      try {
+        let query = supabase
+          .from('purchase_requests')
+          .select(
+            `
+            *,
+            reagent:reagents(id, name, cas_number),
+            applicant:users!purchase_requests_applicant_id_fkey(id, name, role),
+            laboratory:laboratories(id, name)
+          `
+          )
+          .order('created_at', { ascending: false })
+          .range((page - 1) * pageSize, page * pageSize - 1)
+
+        if (status) {
+          query = query.eq('status', status)
+        }
+
+        const { data, error } = await query
+
+        if (error) throw error
+
+        return { success: true, data: data || [] }
+      } catch (error: any) {
+        commit('SET_ERROR', error.message || '获取申请列表失败')
+        return { success: false, error: error.message }
+      } finally {
+        commit('SET_LOADING', false)
+      }
+    },
+
+    // 审批申请
+    async approveRequest({ commit }, { requestId, status, comments, approverId }) {
+      commit('SET_LOADING', true)
+
+      try {
+        // 创建审批记录
+        const { error: approvalError } = await supabase.from('approvals').insert({
+          request_id: requestId,
+          approver_id: approverId,
+          status,
+          comments
+        })
+
+        if (approvalError) throw approvalError
+
+        // 更新申请状态
+        const { error: updateError } = await supabase.from('purchase_requests').update({ status }).eq('id', requestId)
+
+        if (updateError) throw updateError
+
+        return { success: true }
+      } catch (error: any) {
+        commit('SET_ERROR', error.message || '审批失败')
+        return { success: false, error: error.message }
+      } finally {
+        commit('SET_LOADING', false)
+      }
+    },
+
+    // 获取库存列表
+    async fetchInventory({ commit }, { laboratoryId, page = 1, pageSize = 50 }) {
+      commit('SET_LOADING', true)
+
+      try {
+        const { data, error } = await supabase
+          .from('inventory')
+          .select(
+            `
+            *,
+            reagent:reagents(id, name, cas_number, category),
+            laboratory:laboratories(id, name),
+            created_by:users!inventory_created_by_fkey(id, name)
+          `
+          )
+          .eq('laboratory_id', laboratoryId)
+          .order('created_at', { ascending: false })
+          .range((page - 1) * pageSize, page * pageSize - 1)
+
+        if (error) throw error
+
+        return { success: true, data: data || [] }
+      } catch (error: any) {
+        commit('SET_ERROR', error.message || '获取库存列表失败')
+        return { success: false, error: error.message }
+      } finally {
+        commit('SET_LOADING', false)
+      }
     }
   },
 
