@@ -11,9 +11,14 @@ export function verifyPassword(password: string, hash: string): boolean {
   return hashPassword(password) === hash
 }
 
-// 生成用户ID
+// 生成用户ID (UUID格式)
 export function generateUserId(): string {
-  return 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+  // 生成UUID v4格式
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
 }
 
 // 验证用户名格式
@@ -71,7 +76,7 @@ export function validateEmail(email: string): { valid: boolean; message?: string
 
 // 生成会话令牌
 export function generateSessionToken(): string {
-  return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 16)
+  return 'session_' + Date.now() + '_' + Math.random().toString(36).substring(2, 18)
 }
 
 // 会话存储键名

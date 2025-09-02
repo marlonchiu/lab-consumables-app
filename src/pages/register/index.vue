@@ -7,9 +7,9 @@
     </view>
 
     <view class="p-6">
-      <view class="bg-white rounded-2xl shadow-soft p-6">
-        <van-form @submit="handleRegister">
-          <van-cell-group inset>
+      <view class="bg-white rounded-2xl shadow-soft p-2">
+        <van-form label-width="4em" @submit="handleRegister">
+          <van-cell-group inset class="mx-0">
             <van-field
               v-model="registerForm.username"
               name="username"
@@ -87,6 +87,20 @@
               label-class="text-gray-700 font-medium"
               input-class="text-gray-800"
             />
+            <!-- 实验室选择 -->
+            <van-field
+              v-model="registerForm.laboratoryName"
+              name="laboratory"
+              label="所属实验室"
+              placeholder="请选择实验室"
+              readonly
+              is-link
+              @click="showLaboratoryPicker = true"
+              :rules="[{ required: true, message: '请选择所属实验室' }]"
+              label-class="text-gray-700 font-medium"
+              input-class="text-gray-800"
+            />
+
             <van-field
               v-model="registerForm.phone"
               name="phone"
@@ -124,13 +138,23 @@
         </view>
       </view>
     </view>
+
+    <!-- 实验室选择弹窗 -->
+    <van-popup v-model:show="showLaboratoryPicker" position="bottom" round>
+      <van-picker
+        :columns="laboratoryColumns"
+        @confirm="onLaboratoryConfirm"
+        @cancel="showLaboratoryPicker = false"
+        title="选择实验室"
+      />
+    </van-popup>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useStore } from 'vuex'
-import { UserRole } from '@/utils/supabase'
+import { UserRole, supabase } from '@/utils/supabase'
 
 const store = useStore()
 
@@ -142,11 +166,60 @@ const registerForm = ref({
   confirmPassword: '',
   role: 'student' as UserRole,
   student_id: '',
-  phone: ''
+  phone: '',
+  laboratory_id: '',
+  laboratoryName: ''
 })
 
 const loading = computed(() => store.getters.loading)
 const error = computed(() => store.getters.error)
+
+// 实验室选择相关
+const showLaboratoryPicker = ref(false)
+const laboratories = ref<any[]>([])
+const laboratoryColumns = ref<any[]>([])
+
+interface Laboratory {
+  id: string
+  name: string
+  description?: string
+}
+
+// 获取实验室列表
+const fetchLaboratories = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('laboratories')
+      .select('id, name, description')
+      .eq('is_active', true)
+      .order('name')
+
+    if (error) throw error
+
+    laboratories.value = data || []
+    laboratoryColumns.value =
+      data?.map((lab) => ({
+        text: lab.name,
+        value: lab.id
+      })) || []
+  } catch (error) {
+    console.error('获取实验室列表失败:', error)
+    uni.showToast({
+      title: '获取实验室列表失败',
+      icon: 'error'
+    })
+  }
+}
+
+// 实验室选择确认
+const onLaboratoryConfirm = ({ selectedOptions }: any) => {
+  const selected = selectedOptions[0]
+  if (selected) {
+    registerForm.value.laboratory_id = selected.value
+    registerForm.value.laboratoryName = selected.text
+  }
+  showLaboratoryPicker.value = false
+}
 
 const validatePassword = () => {
   return registerForm.value.password === registerForm.value.confirmPassword
@@ -161,7 +234,15 @@ const handleRegister = async () => {
     return
   }
 
-  const { confirmPassword, ...userData } = registerForm.value
+  if (!registerForm.value.laboratory_id) {
+    uni.showToast({
+      title: '请选择所属实验室',
+      icon: 'error'
+    })
+    return
+  }
+
+  const { confirmPassword, laboratoryName, ...userData } = registerForm.value
   const result = await store.dispatch('register', userData)
 
   if (result.success) {
@@ -187,6 +268,11 @@ const handleRegister = async () => {
 const goToLogin = () => {
   uni.navigateBack()
 }
+
+// 页面加载时获取实验室列表
+onMounted(() => {
+  fetchLaboratories()
+})
 </script>
 
 <style scoped></style>
