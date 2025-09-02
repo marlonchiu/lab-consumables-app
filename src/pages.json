@@ -32,6 +32,22 @@
       }
     },
     {
+      "path": "pages/inventory/add",
+      "style": {
+        "navigationBarTitleText": "添加库存",
+        "enablePullDownRefresh": false,
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/inventory/edit",
+      "style": {
+        "navigationBarTitleText": "编辑库存",
+        "enablePullDownRefresh": false,
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/profile/index",
       "style": {
         "navigationBarTitleText": "个人中心"

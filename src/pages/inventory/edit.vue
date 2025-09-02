@@ -1,22 +1,32 @@
 <template>
   <view class="min-h-screen bg-gray-50">
     <!-- 导航栏 -->
-    <van-nav-bar title="添加库存" left-text="返回" left-arrow @click-left="goBack" class="nav-bar" />
+    <van-nav-bar title="编辑库存" left-text="返回" left-arrow @click-left="goBack" class="nav-bar" />
 
-    <!-- 添加表单 -->
-    <view class="form-container p-4">
+    <!-- 加载状态 -->
+    <view v-if="loading" class="flex justify-center items-center py-20">
+      <van-loading size="24px">加载中...</van-loading>
+    </view>
+
+    <!-- 编辑表单 -->
+    <view v-else-if="inventoryData" class="form-container p-4">
       <van-form @submit="handleSubmit" ref="formRef">
         <van-cell-group inset class="mx-0">
-          <!-- 试剂选择 -->
+          <!-- 试剂信息（只读） -->
           <van-field
-            v-model="form.reagentName"
-            name="reagent"
+            :value="inventoryData.reagent?.name || '未知试剂'"
+            name="reagentName"
             label="试剂名称"
-            placeholder="请选择试剂"
             readonly
-            is-link
-            @click="showReagentPicker = true"
-            :rules="[{ required: true, message: '请选择试剂' }]"
+            label-class="text-gray-700 font-medium"
+            input-class="text-gray-800"
+          />
+
+          <van-field
+            :value="inventoryData.reagent?.cas_number || '无'"
+            name="casNumber"
+            label="CAS号"
+            readonly
             label-class="text-gray-700 font-medium"
             input-class="text-gray-800"
           />
@@ -137,28 +147,23 @@
         <!-- 提交按钮 -->
         <view class="submit-container mt-5">
           <van-button type="primary" native-type="submit" block :loading="submitting" class="submit-btn">
-            {{ submitting ? '添加中...' : '添加库存' }}
+            {{ submitting ? '保存中...' : '保存修改' }}
           </van-button>
         </view>
       </van-form>
     </view>
 
-    <!-- 试剂选择弹窗 -->
-    <van-popup v-model:show="showReagentPicker" position="bottom" round>
-      <van-picker
-        :columns="reagentColumns"
-        @confirm="onReagentConfirm"
-        @cancel="showReagentPicker = false"
-        title="选择试剂"
-      />
-    </van-popup>
+    <!-- 数据不存在 -->
+    <view v-else class="p-5">
+      <van-empty description="库存记录不存在" />
+    </view>
 
     <!-- 单位选择弹窗 -->
     <van-popup v-model:show="showUnitPicker" position="bottom" round>
       <van-picker :columns="unitColumns" @confirm="onUnitConfirm" @cancel="showUnitPicker = false" title="选择单位" />
     </van-popup>
 
-    <!-- 过期日期选择弹窗 -->
+    <!-- 日期选择弹窗 -->
     <van-popup v-model:show="showDatePicker" position="bottom" round>
       <van-date-picker
         :model-value="currentDate"
@@ -188,9 +193,16 @@ import { supabase } from '@/utils/supabase'
 const store = useStore()
 const user = store.state.user
 
+// 获取URL参数
+const pages = getCurrentPages()
+const currentPage = pages[pages.length - 1]
+const inventoryId = currentPage.options?.id
+
+const loading = ref(true)
+const submitting = ref(false)
+const inventoryData = ref(null)
+
 const form = ref({
-  reagentId: '',
-  reagentName: '',
   batchNumber: '',
   quantity: '',
   unit: 'g',
@@ -202,17 +214,11 @@ const form = ref({
   notes: ''
 })
 
-const submitting = ref(false)
-const showReagentPicker = ref(false)
 const showUnitPicker = ref(false)
 const showDatePicker = ref(false)
 const showPurchaseDatePicker = ref(false)
 const currentDate = ref([])
 const currentPurchaseDate = ref([])
-
-// 试剂列表
-const reagents = ref<any[]>([])
-const reagentColumns = ref<any[]>([])
 
 // 单位选项
 const unitColumns = [
@@ -226,25 +232,76 @@ const unitColumns = [
   { text: '毫摩尔(mmol)', value: 'mmol' }
 ]
 
-// 获取试剂列表
-const fetchReagents = async () => {
+// 获取库存详情
+const fetchInventoryDetail = async () => {
+  if (!inventoryId) {
+    uni.showToast({ title: '缺少库存ID', icon: 'error' })
+    setTimeout(() => {
+      uni.navigateBack()
+    }, 1500)
+    return
+  }
+
   try {
+    loading.value = true
+
     const { data, error } = await supabase
-      .from('reagents')
-      .select('id, name, cas_number')
-      .eq('is_active', true)
-      .order('name')
+      .from('inventory')
+      .select(
+        `
+        *,
+        reagent:reagents(id, name, cas_number, molecular_formula),
+        laboratory:laboratories(id, name)
+      `
+      )
+      .eq('id', inventoryId)
+      .single()
 
     if (error) throw error
 
-    reagents.value = data || []
-    reagentColumns.value =
-      data?.map((reagent) => ({
-        text: `${reagent.name} (${reagent.cas_number || 'N/A'})`,
-        value: reagent.id
-      })) || []
+    if (!data) {
+      throw new Error('库存记录不存在')
+    }
+
+    inventoryData.value = data
+    console.log('🚀 ~ fetchInventoryDetail ~ data:', data)
+
+    // 填充表单数据
+    form.value = {
+      batchNumber: data.batch_number || '',
+      quantity: data.quantity?.toString() || '',
+      unit: data.unit || 'g',
+      expiryDate: data.expiry_date || '',
+      purchaseDate: data.purchase_date || '',
+      purchasePrice: data.purchase_price?.toString() || '',
+      location: data.location || '',
+      minStockLevel: data.min_stock_level?.toString() || '0',
+      notes: data.notes || ''
+    }
+
+    // 设置日期选择器的初始值
+    if (data.expiry_date) {
+      const expiry_date = form.value.expiryDate
+      const year = new Date(expiry_date).getFullYear()
+      const month = new Date(expiry_date).getMonth() + 1
+      const day = new Date(expiry_date).getDate()
+      currentDate.value = [year, month, day]
+    }
+    if (data.purchase_date) {
+      const expiry_date = form.value.purchaseDate
+      const year = new Date(expiry_date).getFullYear()
+      const month = new Date(expiry_date).getMonth() + 1
+      const day = new Date(expiry_date).getDate()
+      currentPurchaseDate.value = [year, month, day]
+    }
   } catch (error) {
-    console.error('获取试剂列表失败:', error)
+    console.error('获取库存详情失败:', error)
+    uni.showToast({
+      title: '获取数据失败',
+      icon: 'error'
+    })
+  } finally {
+    loading.value = false
   }
 }
 
@@ -252,28 +309,17 @@ const goBack = () => {
   uni.navigateBack()
 }
 
-const onReagentConfirm = ({ selectedOptions }: any) => {
-  const selected = selectedOptions[0]
-  if (selected) {
-    form.value.reagentId = selected.value
-    form.value.reagentName = selected.text
-
-    // 自动填充CAS号
-    const reagent = reagents.value.find((r) => r.id === selected.value)
-    if (reagent) {
-      // 这里可以添加CAS号显示逻辑
-    }
-  }
-  showReagentPicker.value = false
-}
-
-const onUnitConfirm = ({ selectedOptions }: any) => {
+const onUnitConfirm = ({ selectedOptions }) => {
   form.value.unit = selectedOptions[0]?.value || 'g'
   showUnitPicker.value = false
 }
 
 const onShowDatePicker = () => {
-  currentDate.value = [new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate()]
+  // const expiry_date = form.value.expiryDate
+  // const year = new Date(expiry_date).getFullYear()
+  // const month = new Date(expiry_date).getMonth() + 1
+  // const day = new Date(expiry_date).getDate()
+  // currentDate.value = [year, month, day]
   showDatePicker.value = true
 }
 
@@ -283,7 +329,11 @@ const onDateConfirm = ({ selectedValues }) => {
 }
 
 const onShowPurchaseDatePicker = () => {
-  currentPurchaseDate.value = [new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate()]
+  // const purchase_date = form.value.purchaseDate
+  // const year = new Date(purchase_date).getFullYear()
+  // const month = new Date(purchase_date).getMonth() + 1
+  // const day = new Date(purchase_date).getDate()
+  // currentPurchaseDate.value = [year, month, day]
   showPurchaseDatePicker.value = true
 }
 
@@ -301,37 +351,29 @@ const handleSubmit = async () => {
     return
   }
 
-  if (!form.value.reagentId) {
-    uni.showToast({
-      title: '请选择试剂',
-      icon: 'error'
-    })
-    return
-  }
-
   submitting.value = true
-  console.log(form.value)
 
   try {
-    const { error } = await supabase.from('inventory').insert({
-      reagent_id: form.value.reagentId,
-      laboratory_id: user.laboratory_id,
-      batch_number: form.value.batchNumber || null,
-      quantity: parseFloat(form.value.quantity),
-      unit: form.value.unit,
-      expiry_date: form.value.expiryDate || null,
-      purchase_date: form.value.purchaseDate || null,
-      purchase_price: form.value.purchasePrice ? parseFloat(form.value.purchasePrice) : null,
-      location: form.value.location,
-      min_stock_level: parseFloat(form.value.minStockLevel || '0'),
-      notes: form.value.notes || null,
-      created_by: user.id
-    })
+    const { error } = await supabase
+      .from('inventory')
+      .update({
+        batch_number: form.value.batchNumber || null,
+        quantity: parseFloat(form.value.quantity),
+        unit: form.value.unit,
+        expiry_date: form.value.expiryDate || null,
+        purchase_date: form.value.purchaseDate || null,
+        purchase_price: form.value.purchasePrice ? parseFloat(form.value.purchasePrice) : null,
+        location: form.value.location,
+        min_stock_level: parseFloat(form.value.minStockLevel || '0'),
+        notes: form.value.notes || null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', inventoryId)
 
     if (error) throw error
 
     uni.showToast({
-      title: '添加成功',
+      title: '修改成功',
       icon: 'success'
     })
 
@@ -339,9 +381,9 @@ const handleSubmit = async () => {
       uni.navigateBack()
     }, 1500)
   } catch (error) {
-    console.error('添加库存失败:', error)
+    console.error('修改库存失败:', error)
     uni.showToast({
-      title: '添加失败，请重试',
+      title: '修改失败，请重试',
       icon: 'error'
     })
   } finally {
@@ -350,7 +392,7 @@ const handleSubmit = async () => {
 }
 
 onMounted(() => {
-  fetchReagents()
+  fetchInventoryDetail()
 })
 </script>
 

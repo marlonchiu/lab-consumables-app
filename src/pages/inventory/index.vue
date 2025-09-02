@@ -19,10 +19,11 @@
         <view class="search-bar bg-white p-5 border-b border-gray-100">
           <van-search
             v-model="searchValue"
-            placeholder="搜索试剂名称、CAS号"
+            placeholder="搜索试剂名称、CAS号、批次号、位置"
             background="#f8f9fa"
             shape="round"
             @search="onSearch"
+            @input="onSearchInput"
           />
         </view>
 
@@ -90,6 +91,17 @@
               </view>
             </view>
           </view>
+
+          <!-- 加载更多 -->
+          <view v-if="hasMore && inventoryList.length > 0" class="text-center py-4">
+            <van-loading v-if="loadingMore" size="20px">加载中...</van-loading>
+            <text v-else class="text-gray-500 text-sm" @tap="loadMore">点击加载更多</text>
+          </view>
+
+          <!-- 没有更多数据 -->
+          <view v-if="!hasMore && inventoryList.length > 0" class="text-center py-4">
+            <text class="text-gray-400 text-sm">没有更多数据了</text>
+          </view>
         </view>
       </van-pull-refresh>
     </view>
@@ -121,18 +133,26 @@ const searchValue = ref('')
 const activeTab = ref(0)
 const loading = ref(false)
 const refreshing = ref(false)
+const loadingMore = ref(false)
+const hasMore = ref(true)
+const currentPage = ref(1)
+const pageSize = 20
 
 const filterTabs = ['全部', '有机溶剂', '无机试剂', '生物试剂', '指示剂', '低库存']
 
 // 库存数据
-const inventoryList = ref([])
+const inventoryList = ref<any[]>([])
 
 // 获取库存列表
-const fetchInventory = async () => {
+const fetchInventory = async (page = 1, isRefresh = false) => {
   if (!canManage.value) return
 
   try {
-    loading.value = true
+    if (page === 1) {
+      loading.value = true
+    } else {
+      loadingMore.value = true
+    }
 
     const { data, error } = await supabase
       .from('inventory')
@@ -146,10 +166,11 @@ const fetchInventory = async () => {
       )
       .eq('laboratory_id', user.laboratory_id)
       .order('created_at', { ascending: false })
+      .range((page - 1) * pageSize, page * pageSize - 1)
 
     if (error) throw error
 
-    inventoryList.value = (data || []).map((item) => ({
+    const processedData = (data || []).map((item) => ({
       ...item,
       isLowStock: item.quantity <= item.min_stock_level,
       currentStock: item.quantity,
@@ -159,6 +180,14 @@ const fetchInventory = async () => {
       specification: `${item.quantity}${item.unit}`,
       location: item.location || '未设置'
     }))
+
+    if (isRefresh || page === 1) {
+      inventoryList.value = processedData
+    } else {
+      inventoryList.value.push(...processedData)
+    }
+
+    hasMore.value = (data?.length || 0) === pageSize
   } catch (error) {
     console.error('获取库存列表失败:', error)
     uni.showToast({
@@ -167,14 +196,24 @@ const fetchInventory = async () => {
     })
   } finally {
     loading.value = false
+    loadingMore.value = false
   }
 }
 
 // 下拉刷新
 const onRefresh = async () => {
   refreshing.value = true
-  await fetchInventory()
+  currentPage.value = 1
+  await fetchInventory(1, true)
   refreshing.value = false
+}
+
+// 加载更多
+const loadMore = async () => {
+  if (loadingMore.value || !hasMore.value) return
+
+  currentPage.value++
+  await fetchInventory(currentPage.value)
 }
 
 // 筛选后的库存列表
@@ -197,7 +236,10 @@ const filteredInventory = computed(() => {
     filtered = filtered.filter(
       (item) =>
         item.name.toLowerCase().includes(keyword) ||
-        (item.reagent?.cas_number && item.reagent.cas_number.toLowerCase().includes(keyword))
+        (item.reagent?.cas_number && item.reagent.cas_number.toLowerCase().includes(keyword)) ||
+        (item.batch_number && item.batch_number.toLowerCase().includes(keyword)) ||
+        (item.location && item.location.toLowerCase().includes(keyword)) ||
+        (item.reagent?.molecular_formula && item.reagent.molecular_formula.toLowerCase().includes(keyword))
     )
   }
 
@@ -210,6 +252,11 @@ const setActiveTab = (index: number) => {
 
 const onSearch = (value: string) => {
   // 搜索功能已在 computed 中实现
+}
+
+const onSearchInput = (value: string) => {
+  // 实时搜索，可以添加防抖逻辑
+  searchValue.value = value
 }
 
 const addInventory = () => {
@@ -251,9 +298,20 @@ const deleteInventory = async (item: any) => {
     return
   }
 
+  const content = `确定要删除以下库存记录吗？
+
+试剂名称：${item.name}
+批次号：${item.batch_number || '无'}
+数量：${item.currentStock}${item.unit}
+位置：${item.location}
+
+删除后无法恢复，请谨慎操作！`
+
   uni.showModal({
     title: '确认删除',
-    content: `确定要删除 ${item.name} 的库存记录吗？`,
+    content: content,
+    confirmText: '确认删除',
+    confirmColor: '#ff4444',
     success: async (res) => {
       if (res.confirm) {
         try {
@@ -266,11 +324,13 @@ const deleteInventory = async (item: any) => {
             icon: 'success'
           })
 
-          await fetchInventory()
+          // 刷新列表
+          currentPage.value = 1
+          await fetchInventory(1, true)
         } catch (error) {
           console.error('删除失败:', error)
           uni.showToast({
-            title: '删除失败',
+            title: '删除失败，请重试',
             icon: 'error'
           })
         }
@@ -287,7 +347,7 @@ const formatDate = (dateString: string) => {
 
 onMounted(() => {
   if (canManage.value) {
-    fetchInventory()
+    fetchInventory(1, true)
   }
 })
 </script>

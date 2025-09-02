@@ -1,5 +1,9 @@
 @use './sugar.scss';
 
-@import "tailwindcss/base";
-@import "tailwindcss/components";
-@import "tailwindcss/utilities";
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+:root:root {
+  --van-primary-color: #952b2b;
+}
