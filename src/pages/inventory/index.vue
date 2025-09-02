@@ -29,18 +29,9 @@
 
         <!-- 筛选标签 -->
         <view class="filter-tabs flex gap-2 px-5 py-4 bg-white border-b border-gray-100">
-          <view
-            v-for="(tab, index) in filterTabs"
-            :key="index"
-            class="filter-tab px-4 py-2 border border-gray-200 rounded-full text-xs cursor-pointer transition-all"
-            :class="{
-              'bg-primary-500 text-white border-primary-500': activeTab === index,
-              'hover:bg-gray-50': activeTab !== index
-            }"
-            @tap="setActiveTab(index)"
-          >
-            <text>{{ tab }}</text>
-          </view>
+          <van-tabs v-model:active="activeTab" @click-tab="onClickTab">
+            <van-tab v-for="(tab, index) in filterTabs" :key="index" :title="tab"> </van-tab>
+          </van-tabs>
         </view>
 
         <!-- 库存列表 -->
@@ -246,17 +237,17 @@ const filteredInventory = computed(() => {
   return filtered
 })
 
-const setActiveTab = (index: number) => {
-  activeTab.value = index
+const onClickTab = (tab: any) => {
+  activeTab.value = tab.name
 }
 
 const onSearch = (value: string) => {
   // 搜索功能已在 computed 中实现
 }
 
-const onSearchInput = (value: string) => {
+const onSearchInput = (event: MouseEvent) => {
   // 实时搜索，可以添加防抖逻辑
-  searchValue.value = value
+  searchValue.value = event.target?.value || ''
 }
 
 const addInventory = () => {
